@@ -1,6 +1,6 @@
 const project = artifacts.require("PersonCreation");
 const token = artifacts.require('MyToken');
-const utils = require("./helpers/utils");
+const token_manager = artifacts.require('MultiSigTokenManager');
 var chai = require("chai");
 
 const BN = web3.utils.BN;
@@ -11,7 +11,7 @@ var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
 const expect = chai.expect;
-const StudentsNames = ["ali", "mo"];
+const StudentsNames = ["alice", "bob"];
 
 contract("project", (accounts) => {
     let [university,alice, bob] = accounts;
@@ -19,7 +19,8 @@ contract("project", (accounts) => {
     let contractInstance;
     beforeEach(async () => {
         contractInstance = await project.new();
-        instance = await token.deployed();
+        TokenInstance = await token.deployed();
+        TokenManager = await token_manager.deployed();
     });
     it("should be able to create a new student", async () => {
         const result = await contractInstance.Creat_Student(StudentsNames[0],5,"msse",true, {from: alice});
@@ -30,36 +31,40 @@ contract("project", (accounts) => {
         await contractInstance.Creat_Student(StudentsNames[0],5,"msse",true, {from: alice});
         await expect(contractInstance.Creat_Student(StudentsNames[1],5,"msse",true, {from: alice})).to.eventually.be.rejected;
     })
-    context("with the single-step transfer scenario1", async () => {
+    context("test Multi signature transfer ", async () => {
         it("should verrify balance of token", async () => {
-            let totalSupply = await instance.totalSupply();
-            await expect(instance.balanceOf(university)).to.eventually.be.a.bignumber.equal(totalSupply);
-            await expect(instance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(0));
+            let totalSupply = await TokenInstance.totalSupply();
+            const contract_address = await TokenManager.address;
+            await expect(TokenInstance.balanceOf(contract_address)).to.eventually.be.a.bignumber.equal(totalSupply);
+            await expect(TokenInstance.balanceOf(university)).to.eventually.be.a.bignumber.equal(new BN(0));
         })
         it("I can send tokens from Account 1 to Account 2", async () => {
             const sendTokens = 5;
-            let totalSupply = await instance.totalSupply();
-            await expect(instance.balanceOf(university)).to.eventually.be.a.bignumber.equal(totalSupply);
-            await expect(instance.transfer(alice, sendTokens)).to.eventually.be.fulfilled;      
-            await expect(instance.balanceOf(university)).to.eventually.be.a.bignumber.equal(totalSupply.sub(new BN(sendTokens)));
-            await expect(instance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(sendTokens));
+            let totalSupply = await TokenInstance.totalSupply();
+            const contract_address = await TokenManager.address;
+            await expect(TokenManager.setMyTokenAddress(TokenInstance.address)).to.eventually.be.fulfilled;
+            await expect(TokenInstance.balanceOf(contract_address)).to.eventually.be.a.bignumber.equal(totalSupply);
+            await expect(TokenInstance.transfer(alice, sendTokens)).to.eventually.be.rejected;
+            await expect(TokenManager.submitTransaction(alice, sendTokens,0x00,{from: university})).to.eventually.be.fulfilled;
+            await expect(TokenManager.confirmTransaction(0,{from: alice})).to.eventually.be.fulfilled;
+            await expect(TokenManager.executeTransaction(0,{from: alice})).to.eventually.be.rejected; 
+            await expect(TokenManager.confirmTransaction(0,{from: university})).to.eventually.be.fulfilled; 
+            await expect(TokenManager.executeTransaction(0,{from: alice})).to.eventually.be.fulfilled;         
+            await expect(TokenInstance.balanceOf(contract_address)).to.eventually.be.a.bignumber.equal(totalSupply.sub(new BN(sendTokens)));
+            await expect(TokenInstance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(sendTokens));
           });
           it("send from alice to bob", async () => {
-            await expect(instance.transfer(bob,1,{from:alice})).to.eventually.be.fulfilled;
-            await expect(instance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(4));
-            await expect(instance.balanceOf(bob)).to.eventually.be.a.bignumber.equal(new BN(1));
+            await expect(TokenInstance.transfer(bob,1,{from:alice})).to.eventually.be.fulfilled;
+            await expect(TokenInstance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(4));
+            await expect(TokenInstance.balanceOf(bob)).to.eventually.be.a.bignumber.equal(new BN(1));
       
           });
           it("It's not possible to send more tokens than account 1 has", async () => {
-            await expect(instance.transfer(bob,5,{from:alice})).to.eventually.be.rejected;
+            await expect(TokenInstance.transfer(bob,5,{from:alice})).to.eventually.be.rejected;
       
             //check if the balance is still the same
-            await expect(instance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(4));
+            await expect(TokenInstance.balanceOf(alice)).to.eventually.be.a.bignumber.equal(new BN(4));
       
           });
-          
-    })
-    context("with the single-step transfer scenario 2", async () => {
-
     })
 })

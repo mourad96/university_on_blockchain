@@ -12,6 +12,7 @@ contract PersonCreation is Ownable{
         string certificate;
         uint8 birth_date;
         uint32 token_balance;
+        bool verified;
     }
 
     struct Student{
@@ -49,7 +50,7 @@ contract PersonCreation is Ownable{
     //only the university can fill person token balance and certificate ...
     function Creat_Student(string memory _name, uint8 _birth_date,string memory _class, bool _international) external{
         require(student_id_count[msg.sender] == 0);//check that this person have no account
-        Student memory s1 = Student(Person(_name,"no_certificate",_birth_date,0),_class,_international);
+        Student memory s1 = Student(Person(_name,"no_certificate",_birth_date,0,false),_class,_international);
         students.push(s1);
         uint id = students.length - 1;
         student_id_to_address[id] = msg.sender;
@@ -60,7 +61,7 @@ contract PersonCreation is Ownable{
     ///university will creat staff members
     function Creat_Staff(string memory _name, uint8 _birth_date,string memory _job,address _addOfStaff)onlyOwner external{
         require(staff_id_count[_addOfStaff] == 0);//check that this person have no account
-        Staff memory s1 = Staff(Person(_name,"no_certificate",_birth_date,0),_addOfStaff,_job);
+        Staff memory s1 = Staff(Person(_name,"no_certificate",_birth_date,0,true),_addOfStaff,_job);
         staffs.push(s1);
         uint id = staffs.length - 1;
         staff_id_to_address[id] = msg.sender;
@@ -71,7 +72,7 @@ contract PersonCreation is Ownable{
      ///university will creat visitors
     function Creat_Visitor(string memory _name, uint8 _birth_date,uint32 _visit_day_begin,uint32 _visit_day_end,address _addOfVisitor)onlyOwner external{
         require(visitor_id_count[_addOfVisitor] == 0);//check that this person have no account
-        Visitor memory s1 = Visitor(Person(_name,"no_certificate",_birth_date,0),_addOfVisitor,_visit_day_begin,_visit_day_end);
+        Visitor memory s1 = Visitor(Person(_name,"no_certificate",_birth_date,0,true),_addOfVisitor,_visit_day_begin,_visit_day_end);
         visitors.push(s1);
         uint id = visitors.length - 1;
         visitor_id_to_address[id] = msg.sender;
