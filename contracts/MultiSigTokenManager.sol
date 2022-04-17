@@ -9,7 +9,8 @@ contract MultiSigTokenManager {
         uint indexed txIndex,
         address indexed to,
         uint value,
-        bytes data
+        bytes data,
+        string TokenType
     );
     event ConfirmTransaction(address indexed owner, uint indexed txIndex);
     event RevokeConfirmation(address indexed owner, uint indexed txIndex);
@@ -24,6 +25,7 @@ contract MultiSigTokenManager {
         address to;
         uint value;
         bytes data;
+        string TokenType;
         bool executed;
         uint numConfirmations;
     }
@@ -88,7 +90,8 @@ contract MultiSigTokenManager {
     function submitTransaction(
         address _to,
         uint _value,
-        bytes memory _data
+        bytes memory _data,
+        string memory _TokenType
     ) public onlyOwner {
         uint txIndex = transactions.length;
 
@@ -97,12 +100,13 @@ contract MultiSigTokenManager {
                 to: _to,
                 value: _value,
                 data: _data,
+                TokenType: _TokenType,
                 executed: false,
                 numConfirmations: 0
             })
         );
 
-        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
+        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data,_TokenType);
     }
 
     function confirmTransaction(uint _txIndex)
@@ -131,11 +135,16 @@ contract MultiSigTokenManager {
             transaction.numConfirmations >= numConfirmationsRequired,
             "cannot execute tx"
         );
-
+        if(keccak256(bytes(transaction.TokenType)) == keccak256(bytes("ETH"))){
+            (bool success, ) = transaction.to.call{value: transaction.value}(
+            transaction.data);
+            require(success,"transfer ether failed");
+        }
+        else{
+            (bool success, ) = myTokenAddress.call(abi.encodeWithSignature("transfer(address,uint256)",transaction.to,transaction.value));
+            require(success,"transfer Token failed");
+        }
         transaction.executed = true;
-
-        (bool success, ) = myTokenAddress.call(abi.encodeWithSignature("transfer(address,uint256)",transaction.to,transaction.value));
-        require(success,"transfer failed");
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
