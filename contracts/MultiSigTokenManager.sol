@@ -10,13 +10,15 @@ contract MultiSigTokenManager {
         address indexed to,
         uint value,
         bytes data,
-        string TokenType
+        string TokenType,
+        string DiplomaURI
     );
     event ConfirmTransaction(address indexed owner, uint indexed txIndex);
     event RevokeConfirmation(address indexed owner, uint indexed txIndex);
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
 
     address public myTokenAddress;
+    address public myDiplomaAddress;
     address[] public owners;
     mapping(address => bool) public isOwner;
     uint public numConfirmationsRequired;
@@ -26,6 +28,7 @@ contract MultiSigTokenManager {
         uint value;
         bytes data;
         string TokenType;
+        string DiplomaURI;
         bool executed;
         uint numConfirmations;
     }
@@ -55,7 +58,8 @@ contract MultiSigTokenManager {
         _;
     }
     modifier addressIsNotEmpty() {
-        require(myTokenAddress != address(0), "Address is empty!");
+        require(myTokenAddress != address(0), "Token Address is empty!");
+        require(myDiplomaAddress != address(0), "Diploma Address is empty!");
         _;
     }
     constructor(address[] memory _owners, uint _numConfirmationsRequired){
@@ -86,12 +90,16 @@ contract MultiSigTokenManager {
     function setMyTokenAddress(address _myTokenAddress) public onlyOwner {
         myTokenAddress = _myTokenAddress;
     }
+    function setMyDiplomaAddress(address _myDiplomaAddress) public onlyOwner {
+        myDiplomaAddress = _myDiplomaAddress;
+    }
 
     function submitTransaction(
         address _to,
         uint _value,
         bytes memory _data,
-        string memory _TokenType
+        string memory _TokenType,
+        string memory _DiplomaURI
     ) public onlyOwner {
         uint txIndex = transactions.length;
 
@@ -101,12 +109,13 @@ contract MultiSigTokenManager {
                 value: _value,
                 data: _data,
                 TokenType: _TokenType,
+                DiplomaURI: _DiplomaURI,
                 executed: false,
                 numConfirmations: 0
             })
         );
 
-        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data,_TokenType);
+        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data,_TokenType,_DiplomaURI);
     }
 
     function confirmTransaction(uint _txIndex)
@@ -140,9 +149,16 @@ contract MultiSigTokenManager {
             transaction.data);
             require(success,"transfer ether failed");
         }
-        else{
+        else if(keccak256(bytes(transaction.TokenType)) == keccak256(bytes("Diploma"))){
+            (bool success, ) = myDiplomaAddress.call(abi.encodeWithSignature("safeMint(address,uint256,string)",transaction.to,transaction.value,transaction.DiplomaURI));
+            require(success,"Diploma Creation failed");
+        }
+        else if(keccak256(bytes(transaction.TokenType)) == keccak256(bytes("MTK"))) {
             (bool success, ) = myTokenAddress.call(abi.encodeWithSignature("transfer(address,uint256)",transaction.to,transaction.value));
             require(success,"transfer Token failed");
+        }
+        else{
+             require(false,"no existing TokenType");
         }
         transaction.executed = true;
         emit ExecuteTransaction(msg.sender, _txIndex);
