@@ -1,0 +1,26 @@
+
+digraph UmlClassDiagram {
+rankdir=BT
+color=black
+arrowhead=open
+node [shape=record, style=filled, fillcolor=gray95]
+subgraph  graph_0 {
+label="contracts"
+0 [label="{Migrations| Public:\l\ \ \ owner: address\l\ \ \ last_completed_migration: uint\l| Public:\l\ \ \ \ \<\<modifier\>\> restricted()\l\ \ \ \ setCompleted(completed: uint)\l}"]
+1 [label="{MultiSigTokenManager| Public:\l\ \ \ myTokenAddress: address\l\ \ \ owners: address[]\l\ \ \ isOwner: mapping\(address=\>bool\)\l\ \ \ numConfirmationsRequired: uint\l\ \ \ isConfirmed: mapping\(uint=\>mapping\(address=\>bool\)\)\l\ \ \ transactions: Transaction[]\l| External:\l\ \ \ \ \<\<payable\>\> null()\lPublic:\l\ \ \ \ \<\<event\>\> Deposit(sender: address, amount: uint, balance: uint)\l\ \ \ \ \<\<event\>\> SubmitTransaction(owner: address, txIndex: uint, to: address, value: uint, data: bytes)\l\ \ \ \ \<\<event\>\> ConfirmTransaction(owner: address, txIndex: uint)\l\ \ \ \ \<\<event\>\> RevokeConfirmation(owner: address, txIndex: uint)\l\ \ \ \ \<\<event\>\> ExecuteTransaction(owner: address, txIndex: uint)\l\ \ \ \ \<\<modifier\>\> onlyOwner()\l\ \ \ \ \<\<modifier\>\> txExists(_txIndex: uint)\l\ \ \ \ \<\<modifier\>\> notExecuted(_txIndex: uint)\l\ \ \ \ \<\<modifier\>\> notConfirmed(_txIndex: uint)\l\ \ \ \ \<\<modifier\>\> addressIsNotEmpty()\l\ \ \ \ constructor(_owners: address[], _numConfirmationsRequired: uint)\l\ \ \ \ setMyTokenAddress(_myTokenAddress: address)\l\ \ \ \ submitTransaction(_to: address, _value: uint, _data: bytes)\l\ \ \ \ confirmTransaction(_txIndex: uint)\l\ \ \ \ executeTransaction(_txIndex: uint)\l\ \ \ \ revokeConfirmation(_txIndex: uint)\l\ \ \ \ getOwners(): address[]\l\ \ \ \ getTransactionCount(): uint\l\ \ \ \ getTransaction(_txIndex: uint): (to: address, value: uint, data: bytes, executed: bool, numConfirmations: uint)\l}"]
+"1struct0" [label="{\<\<struct\>\>\nTransaction|to: address\lvalue: uint\ldata: bytes\lexecuted: bool\lnumConfirmations: uint\l}"]
+"1struct0" -> 1 [arrowhead=diamond, weight=3]
+2 [label="{MyToken| | Public:\l\ \ \ \ constructor(_manager: address, _initialSupply: uint)\l}"]
+3 [label="{PersonCreation| Public:\l\ \ \ students: Student[]\l\ \ \ student_id_to_address: mapping\(uint=\>address\)\l\ \ \ student_id_count: mapping\(address=\>uint\)\l\ \ \ staffs: Staff[]\l\ \ \ staff_id_to_address: mapping\(uint=\>address\)\l\ \ \ staff_id_count: mapping\(address=\>uint\)\l\ \ \ visitors: Visitor[]\l\ \ \ visitor_id_to_address: mapping\(uint=\>address\)\l\ \ \ visitor_id_count: mapping\(address=\>uint\)\l| External:\l\ \ \ \ Creat_Student(_name: string, _birth_date: uint8, _class: string, _international: bool)\l\ \ \ \ Creat_Staff(_name: string, _birth_date: uint8, _job: string, _addOfStaff: address)\l\ \ \ \ Creat_Visitor(_name: string, _birth_date: uint8, _visit_day_begin: uint32, _visit_day_end: uint32, _addOfVisitor: address)\lPublic:\l\ \ \ \ \<\<event\>\> NewPerson(name: string, birth_date: uint8)\l}"]
+"3struct0" [label="{\<\<struct\>\>\nPerson|name: string\lcertificate: string\lbirth_date: uint8\ltoken_balance: uint32\lverified: bool\l}"]
+"3struct0" -> 3 [arrowhead=diamond, weight=3]
+"3struct1" [label="{\<\<struct\>\>\nStudent|person: Person\lclass: string\linternational: bool\l}"]
+"3struct1" -> 3 [arrowhead=diamond, weight=3]
+"3struct2" [label="{\<\<struct\>\>\nStaff|person: Person\ls: address\ljob: string\l}"]
+"3struct2" -> 3 [arrowhead=diamond, weight=3]
+"3struct3" [label="{\<\<struct\>\>\nVisitor|person: Person\lv: address\lvisit_day_begin: uint32\lvisit_day_end: uint32\l}"]
+"3struct3" -> 3 [arrowhead=diamond, weight=3]
+4 [label="{University| | }"]
+}
+4 -> 3 [arrowhead=empty, arrowsize=3, weight=4, ]
+}
